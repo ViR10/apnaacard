@@ -21,7 +21,7 @@ app.use(helmet({
 // CORS configuration
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? [process.env.NETLIFY_URL || 'https://your-site-name.netlify.app'] 
+        ? ['https://apnacard.netlify.app', process.env.NETLIFY_URL || 'https://apnacard.netlify.app'] 
         : ['http://localhost:3001'],
     credentials: true
 }));
@@ -48,6 +48,16 @@ app.use(cookieParser());
 
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'API is working',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
