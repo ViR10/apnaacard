@@ -1,9 +1,11 @@
+// Load environment variables
+require('dotenv').config();
+
 const serverless = require('serverless-http');
 const app = require('../../src/app');
 const connectDB = require('../../src/config/database');
 
-// Connect to database on function startup
-connectDB();
+let isConnected = false;
 
 // Create admin user if not exists
 const createAdminUser = async () => {
@@ -32,8 +34,20 @@ const createAdminUser = async () => {
     }
 };
 
-// Initialize admin on first run
-createAdminUser();
-
 // Export the serverless function
-module.exports.handler = serverless(app);
+module.exports.handler = async (event, context) => {
+    // Reuse database connection
+    if (!isConnected) {
+        try {
+            await connectDB();
+            await createAdminUser();
+            isConnected = true;
+        } catch (error) {
+            console.error('Database connection failed:', error);
+        }
+    }
+    
+    // Handle the request
+    const handler = serverless(app);
+    return handler(event, context);
+};
