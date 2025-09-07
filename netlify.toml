@@ -5,7 +5,7 @@
   
 [build.environment]
   NODE_VERSION = "18"
-  NPM_VERSION = "8"
+  NPM_VERSION = "10"
 
 # Include backend files in build
 [build.processing]
@@ -56,11 +56,11 @@
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization"
 
-# Include backend files in the deployed build
+# Function configuration
 [functions]
-  included_files = [
-    "backend/**",
-    "src/**", 
-    "package.json",
-    "node_modules/**"
-  ]
+  directory = "netlify/functions"
+  timeout = 30
+  
+[[functions.api]]
+  timeout = 30
+  memory = 1024
