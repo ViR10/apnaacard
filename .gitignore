@@ -1,0 +1,17 @@
+node_modules/
+.env
+uploads/*
+!uploads/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
+# Exclude user uploaded profile images
+profile-*.jpg
+profile-*.jpeg
+profile-*.png
+logs/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local Netlify folder
+.netlify

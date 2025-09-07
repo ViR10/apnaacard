@@ -1,0 +1,18 @@
+/*
+  humans.txt
+  We are people, not machines.
+*/
+
+/* TEAM */
+Developer: APNA Card Team
+Site: https://apnacard.netlify.app/
+
+/* THANKS */
+Tools: Node.js, Express, MongoDB
+Fonts: Inter, Poppins
+
+/* SITE */
+Standards: HTML5, CSS3, ES2020
+Components: SVG icons, Responsive layout
+Last update: 2025-09-06
+

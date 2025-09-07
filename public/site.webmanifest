@@ -1,0 +1,10 @@
+{
+  "name": "APNA Card",
+  "short_name": "APNA Card",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0e3e98",
+  "description": "Modern, secure, responsive student identity card management for UET Lahore."
+}
+

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Disallow private areas
+Disallow: /admin/
+Disallow: /student/
+Disallow: /api/
+
+Sitemap: https://apnacard.netlify.app/sitemap.xml
+
