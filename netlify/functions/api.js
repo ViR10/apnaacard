@@ -1,56 +1,37 @@
-const serverless = require('serverless-http');
 const mongoose = require('mongoose');
-
-// Create a separate Express app for serverless
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const cookieParser = require('cookie-parser');
-
-const app = express();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // Global connection state
-let cachedConnection = null;
+let isConnected = false;
 
 // Connect to MongoDB
 async function connectToDatabase() {
-    if (cachedConnection) {
-        console.log('Using cached database connection');
-        return cachedConnection;
+    if (isConnected && mongoose.connection.readyState === 1) {
+        return mongoose.connection;
     }
 
     try {
-        console.log('Creating new database connection');
-        const connection = await mongoose.connect(process.env.MONGODB_URI, {
-            bufferCommands: false,
-            maxPoolSize: 10,
+        const conn = await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            maxPoolSize: 1,
             serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
+            socketTimeoutMS: 45000
         });
-        
-        cachedConnection = connection;
-        console.log('Database connected successfully');
-        return connection;
+        isConnected = true;
+        console.log('MongoDB Connected');
+        return conn;
     } catch (error) {
         console.error('Database connection error:', error);
         throw error;
     }
 }
 
-// Middleware
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({
-    origin: ['https://apnacard.netlify.app', 'http://localhost:3001'],
-    credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cookieParser());
-
-// User model
+// User Schema
 const userSchema = new mongoose.Schema({
     fullName: { type: String, required: true },
-    studentEmail: { type: String, unique: true, sparse: true },
+    studentEmail: { type: String, sparse: true },
     personalEmail: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['student', 'admin'], default: 'student' },
@@ -69,222 +50,56 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Hash password before saving
-const bcrypt = require('bcryptjs');
+// Password hashing
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 10);
-    next();
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
 });
 
-// Compare password method
+// Password comparison
 userSchema.methods.comparePassword = async function(candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+    try {
+        return await bcrypt.compare(candidatePassword, this.password);
+    } catch (error) {
+        return false;
+    }
 };
 
 // Generate auth token
-const jwt = require('jsonwebtoken');
 userSchema.methods.generateAuthToken = function() {
     return jwt.sign(
         { id: this._id, role: this.role },
-        process.env.JWT_SECRET || 'fallback-secret',
-        { expiresIn: process.env.JWT_EXPIRE || '7d' }
+        process.env.JWT_SECRET || 'emergency-secret-key-12345',
+        { expiresIn: '7d' }
     );
 };
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
-    try {
-        await connectToDatabase();
-        res.json({
-            success: true,
-            message: 'API is working',
-            timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV || 'development'
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Database connection failed',
-            error: error.message
-        });
-    }
-});
+// CORS headers
+const corsHeaders = {
+    'Access-Control-Allow-Origin': 'https://apnacard.netlify.app',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json'
+};
 
-// Login endpoint
-app.post('/api/auth/login', async (req, res) => {
+// Create admin user
+async function createAdmin() {
     try {
-        await connectToDatabase();
-        
-        const { email, password } = req.body;
-        
-        console.log('Login attempt for:', email);
-        
-        if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide email and password'
-            });
-        }
-        
-        // Find user
-        const user = await User.findOne({
-            $or: [
-                { studentEmail: email.toLowerCase() },
-                { personalEmail: email.toLowerCase() }
-            ]
-        });
-        
-        if (!user || !await user.comparePassword(password)) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid email or password'
-            });
-        }
-        
-        if (!user.isActive) {
-            return res.status(401).json({
-                success: false,
-                message: 'Account has been deactivated'
-            });
-        }
-        
-        const token = user.generateAuthToken();
-        
-        console.log('Login successful for:', user.fullName);
-        
-        res.json({
-            success: true,
-            message: 'Login successful',
-            data: {
-                user: {
-                    id: user._id,
-                    fullName: user.fullName,
-                    email: user.studentEmail || user.personalEmail,
-                    role: user.role,
-                    approvalStatus: user.approvalStatus
-                },
-                token,
-                redirectTo: user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard'
-            }
-        });
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Login failed',
-            error: error.message
-        });
-    }
-});
-
-// Register endpoint
-app.post('/api/auth/register', async (req, res) => {
-    try {
-        await connectToDatabase();
-        
-        const {
-            fullName,
-            department,
-            studentId,
-            studentEmail,
-            personalEmail,
-            password,
-            confirmPassword
-        } = req.body;
-        
-        console.log('Registration attempt for:', fullName);
-        
-        // Validation
-        if (!fullName || !department || !studentId || !studentEmail || !personalEmail || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide all required fields.'
-            });
-        }
-        
-        if (password !== confirmPassword) {
-            return res.status(400).json({
-                success: false,
-                message: 'Passwords do not match'
-            });
-        }
-        
-        // Check if user exists
-        const existingUser = await User.findOne({
-            $or: [
-                { studentEmail: studentEmail.toLowerCase() },
-                { personalEmail: personalEmail.toLowerCase() },
-                { studentId }
-            ]
-        });
-        
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: 'User with this email or student ID already exists'
-            });
-        }
-        
-        // Create user
-        const user = new User({
-            fullName,
-            department,
-            studentId: studentId.toUpperCase(),
-            studentEmail: studentEmail.toLowerCase(),
-            personalEmail: personalEmail.toLowerCase(),
-            password,
-            role: 'student'
-        });
-        
-        await user.save();
-        
-        console.log('Registration successful for:', user.fullName);
-        
-        res.status(201).json({
-            success: true,
-            message: 'Student registered successfully. Please login to continue.',
-            data: {
-                id: user._id,
-                fullName: user.fullName,
-                studentId: user.studentId,
-                studentEmail: user.studentEmail
-            }
-        });
-        
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Registration failed',
-            error: error.message
-        });
-    }
-});
-
-// Logout endpoint
-app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('token');
-    res.json({
-        success: true,
-        message: 'Logged out successfully'
-    });
-});
-
-// Create admin user on startup
-const createAdminUser = async () => {
-    try {
-        await connectToDatabase();
-        
         const adminExists = await User.findOne({ role: 'admin' });
         if (!adminExists) {
             const admin = new User({
                 fullName: 'System Administrator',
                 studentEmail: '2024mm@student.uet.edu.pk',
-                personalEmail: process.env.ADMIN_EMAIL || '2024MM@gmail.com',
+                personalEmail: process.env.ADMIN_EMAIL || '2024mm@gmail.com',
                 password: process.env.ADMIN_PASSWORD || '2024mm14@$',
                 role: 'admin',
                 isActive: true,
@@ -293,33 +108,270 @@ const createAdminUser = async () => {
                 studentId: '2024-MM-001'
             });
             await admin.save();
-            console.log('Admin user created successfully');
+            console.log('Admin user created');
         }
     } catch (error) {
-        console.error('Error creating admin user:', error.message);
+        console.error('Error creating admin:', error);
+    }
+}
+
+// Main handler
+exports.handler = async (event, context) => {
+    // Handle CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: corsHeaders,
+            body: ''
+        };
+    }
+
+    try {
+        // Connect to database
+        await connectToDatabase();
+        await createAdmin();
+
+        const { httpMethod, path } = event;
+        let body = {};
+        
+        if (event.body) {
+            try {
+                body = JSON.parse(event.body);
+            } catch (e) {
+                console.log('No JSON body');
+            }
+        }
+
+        console.log(`${httpMethod} ${path}`, body);
+
+        // Health check
+        if (path.includes('/health')) {
+            return {
+                statusCode: 200,
+                headers: corsHeaders,
+                body: JSON.stringify({
+                    success: true,
+                    message: 'API is working perfectly!',
+                    timestamp: new Date().toISOString(),
+                    dbStatus: isConnected ? 'connected' : 'disconnected'
+                })
+            };
+        }
+
+        // Login endpoint
+        if (httpMethod === 'POST' && path.includes('/auth/login')) {
+            const { email, password } = body;
+            
+            console.log('Login attempt:', email);
+
+            if (!email || !password) {
+                return {
+                    statusCode: 400,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: false,
+                        message: 'Email and password are required'
+                    })
+                };
+            }
+
+            try {
+                // Find user by email
+                const user = await User.findOne({
+                    $or: [
+                        { personalEmail: email.toLowerCase() },
+                        { studentEmail: email.toLowerCase() }
+                    ]
+                });
+
+                console.log('User found:', user ? user.fullName : 'None');
+
+                if (!user) {
+                    return {
+                        statusCode: 401,
+                        headers: corsHeaders,
+                        body: JSON.stringify({
+                            success: false,
+                            message: 'Invalid email or password'
+                        })
+                    };
+                }
+
+                // Check password
+                const isValidPassword = await user.comparePassword(password);
+                console.log('Password valid:', isValidPassword);
+
+                if (!isValidPassword) {
+                    return {
+                        statusCode: 401,
+                        headers: corsHeaders,
+                        body: JSON.stringify({
+                            success: false,
+                            message: 'Invalid email or password'
+                        })
+                    };
+                }
+
+                // Generate token
+                const token = user.generateAuthToken();
+
+                console.log('Login successful for:', user.fullName);
+
+                return {
+                    statusCode: 200,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: true,
+                        message: 'Login successful',
+                        data: {
+                            user: {
+                                id: user._id,
+                                fullName: user.fullName,
+                                email: user.personalEmail || user.studentEmail,
+                                role: user.role,
+                                approvalStatus: user.approvalStatus
+                            },
+                            token,
+                            redirectTo: user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard'
+                        }
+                    })
+                };
+            } catch (error) {
+                console.error('Login error:', error);
+                return {
+                    statusCode: 500,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: false,
+                        message: 'Login failed: ' + error.message
+                    })
+                };
+            }
+        }
+
+        // Register endpoint
+        if (httpMethod === 'POST' && path.includes('/auth/register')) {
+            const { fullName, department, studentId, studentEmail, personalEmail, password, confirmPassword } = body;
+            
+            console.log('Registration attempt:', fullName);
+
+            // Validation
+            if (!fullName || !department || !studentId || !studentEmail || !personalEmail || !password) {
+                return {
+                    statusCode: 400,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: false,
+                        message: 'All fields are required'
+                    })
+                };
+            }
+
+            if (password !== confirmPassword) {
+                return {
+                    statusCode: 400,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: false,
+                        message: 'Passwords do not match'
+                    })
+                };
+            }
+
+            try {
+                // Check if user exists
+                const existingUser = await User.findOne({
+                    $or: [
+                        { personalEmail: personalEmail.toLowerCase() },
+                        { studentEmail: studentEmail.toLowerCase() },
+                        { studentId: studentId.toUpperCase() }
+                    ]
+                });
+
+                if (existingUser) {
+                    return {
+                        statusCode: 409,
+                        headers: corsHeaders,
+                        body: JSON.stringify({
+                            success: false,
+                            message: 'User already exists with this email or student ID'
+                        })
+                    };
+                }
+
+                // Create new user
+                const newUser = new User({
+                    fullName,
+                    department,
+                    studentId: studentId.toUpperCase(),
+                    studentEmail: studentEmail.toLowerCase(),
+                    personalEmail: personalEmail.toLowerCase(),
+                    password,
+                    role: 'student'
+                });
+
+                await newUser.save();
+
+                console.log('Registration successful:', newUser.fullName);
+
+                return {
+                    statusCode: 201,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: true,
+                        message: 'Registration successful! Please login.',
+                        data: {
+                            id: newUser._id,
+                            fullName: newUser.fullName,
+                            studentId: newUser.studentId,
+                            studentEmail: newUser.studentEmail
+                        }
+                    })
+                };
+            } catch (error) {
+                console.error('Registration error:', error);
+                return {
+                    statusCode: 500,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        success: false,
+                        message: 'Registration failed: ' + error.message
+                    })
+                };
+            }
+        }
+
+        // Logout endpoint
+        if (httpMethod === 'POST' && path.includes('/auth/logout')) {
+            return {
+                statusCode: 200,
+                headers: corsHeaders,
+                body: JSON.stringify({
+                    success: true,
+                    message: 'Logged out successfully'
+                })
+            };
+        }
+
+        // Route not found
+        return {
+            statusCode: 404,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                success: false,
+                message: `Route not found: ${httpMethod} ${path}`
+            })
+        };
+
+    } catch (error) {
+        console.error('Handler error:', error);
+        return {
+            statusCode: 500,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                success: false,
+                message: 'Server error: ' + error.message
+            })
+        };
     }
 };
-
-// Initialize admin user
-createAdminUser();
-
-// Error handling
-app.use((error, req, res, next) => {
-    console.error('API Error:', error);
-    res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Server error'
-    });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'API endpoint not found'
-    });
-});
-
-// Export serverless handler
-module.exports.handler = serverless(app);
