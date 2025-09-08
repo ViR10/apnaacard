@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>APNA Card Test</title>
+    <style>
+        body { font-family: Arial; margin: 50px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        h1 { color: #667eea; }
+        button { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        #result { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>APNA Card System Test</h1>
+        <p>This is a test to verify deployment is working correctly.</p>
+        
+        <h3>Backend API Tests:</h3>
+        <button onclick="testHealth()">Test Health Check</button>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testRegister()">Test Register</button>
+        
+        <div id="result"></div>
+        
+        <h3>Navigation Tests:</h3>
+        <button onclick="goToDashboard()">Go to Dashboard</button>
+        <button onclick="goToAdmin()">Go to Admin</button>
+        <button onclick="goToHome()">Go to Home</button>
+    </div>
+
+    <script>
+        const API_BASE = '/.netlify/functions';
+        
+        function showResult(title, result) {
+            document.getElementById('result').innerHTML = 
+                `<h4>${title}</h4><pre>${JSON.stringify(result, null, 2)}</pre>`;
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                showResult('Health Check Result', data);
+            } catch (error) {
+                showResult('Health Check Error', error.message);
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: '2024mm@gmail.com', 
+                        password: '2024mm14@$' 
+                    })
+                });
+                const data = await response.json();
+                showResult('Login Test Result', data);
+            } catch (error) {
+                showResult('Login Test Error', error.message);
+            }
+        }
+        
+        async function testRegister() {
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fullName: 'Test User',
+                        studentEmail: 'test@student.uet.edu.pk',
+                        personalEmail: 'test@example.com',
+                        department: 'Computer Science',
+                        password: 'test123'
+                    })
+                });
+                const data = await response.json();
+                showResult('Register Test Result', data);
+            } catch (error) {
+                showResult('Register Test Error', error.message);
+            }
+        }
+        
+        function goToDashboard() {
+            window.location.href = '/dashboard.html';
+        }
+        
+        function goToAdmin() {
+            window.location.href = '/admin-dashboard.html';
+        }
+        
+        function goToHome() {
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

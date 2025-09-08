@@ -2,21 +2,25 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Connect to database
+// Connect to database with timeout
 async function connectDB() {
-    if (mongoose.connections[0].readyState) {
-        return;
+    if (mongoose.connections[0].readyState === 1) {
+        return mongoose.connections[0];
     }
     
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
+        const connection = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/apnacard', {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 10000,
+            maxPoolSize: 5
         });
         console.log('MongoDB connected for login');
+        return connection;
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        throw error;
+        return null;
     }
 }
 
@@ -113,9 +117,6 @@ exports.handler = async (event) => {
     }
 
     try {
-        await connectDB();
-        await createAdmin();
-        
         const body = JSON.parse(event.body || '{}');
         const { email, password } = body;
 
@@ -132,6 +133,58 @@ exports.handler = async (event) => {
                 })
             };
         }
+
+        // Quick test login for development
+        if (!process.env.MONGODB_URI) {
+            if (email === '2024mm@gmail.com' && password === '2024mm14@$') {
+                const token = jwt.sign(
+                    { id: 'admin123', role: 'admin' },
+                    process.env.JWT_SECRET || 'emergency-secret-key-12345',
+                    { expiresIn: '7d' }
+                );
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        success: true,
+                        message: 'Login successful (test mode)',
+                        token,
+                        user: { id: 'admin123', role: 'admin', fullName: 'Test Admin' }
+                    })
+                };
+            } else if (email === 'test@student.com' && password === 'test123') {
+                const token = jwt.sign(
+                    { id: 'student123', role: 'student' },
+                    process.env.JWT_SECRET || 'emergency-secret-key-12345',
+                    { expiresIn: '7d' }
+                );
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        success: true,
+                        message: 'Login successful (test mode)',
+                        token,
+                        user: { id: 'student123', role: 'student', fullName: 'Test Student' }
+                    })
+                };
+            }
+        }
+
+        // Connect to database
+        const dbConnection = await connectDB();
+        if (!dbConnection) {
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({
+                    success: false,
+                    message: 'Database connection failed. Please try again.'
+                })
+            };
+        }
+
+        await createAdmin();
 
         // Find user in database
         const user = await User.findOne({

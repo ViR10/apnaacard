@@ -1,20 +1,24 @@
 const mongoose = require('mongoose');
 
-// Connect to database
+// Connect to database with timeout
 async function connectDB() {
-    if (mongoose.connections[0].readyState) {
-        return;
+    if (mongoose.connections[0].readyState === 1) {
+        return mongoose.connections[0];
     }
     
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
+        const connection = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/apnacard', {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 10000,
+            maxPoolSize: 5
         });
         console.log('MongoDB connected for registration');
+        return connection;
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        throw error;
+        return null;
     }
 }
 
@@ -78,12 +82,43 @@ exports.handler = async (event) => {
     }
 
     try {
-        await connectDB();
-        
         const body = JSON.parse(event.body || '{}');
-        const { fullName, department, studentId, studentEmail, personalEmail, password, confirmPassword } = body;
+        const { fullName, studentEmail, personalEmail, password, department } = body;
 
-        console.log('Registration attempt:', fullName);
+        console.log('Registration attempt:', { fullName, studentEmail, personalEmail, department });
+        
+        // Test mode for development
+        if (!process.env.MONGODB_URI) {
+            console.log('Test mode registration successful');
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    success: true,
+                    message: 'Registration successful (test mode)! You can now login.',
+                    user: {
+                        fullName,
+                        personalEmail,
+                        studentEmail,
+                        department,
+                        role: 'student'
+                    }
+                })
+            };
+        }
+        
+        // Connect to database
+        const dbConnection = await connectDB();
+        if (!dbConnection) {
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({
+                    success: false,
+                    message: 'Database connection failed. Please try again.'
+                })
+            };
+        }
 
         // Validation
         if (!fullName || !department || !studentId || !studentEmail || !personalEmail || !password) {

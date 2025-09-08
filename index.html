@@ -936,6 +936,7 @@
 
                 if (data.success) {
                     localStorage.setItem('token', data.token);
+                    localStorage.setItem('userInfo', JSON.stringify(data.user));
                     showAlert('success', 'Login successful! Redirecting...');
                     
                     setTimeout(() => {
@@ -1058,31 +1059,40 @@
             });
         });
 
-        // Check if user is already logged in
+        // Check if user is already logged in (only if explicitly requested)
         document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                // Redirect to appropriate dashboard
-                fetch(`${API_BASE}/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if (data.user.role === 'admin') {
-                            window.location.href = '/admin-dashboard.html';
-                        } else {
-                            window.location.href = '/dashboard.html';
+            // Only check token on page load if redirected from login
+            const urlParams = new URLSearchParams(window.location.search);
+            const checkAuth = urlParams.get('checkAuth');
+            
+            if (checkAuth === 'true') {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    // Verify token is valid
+                    fetch(`${API_BASE}/health`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
                         }
-                    }
-                })
-                .catch(() => {
-                    // Token might be invalid, remove it
-                    localStorage.removeItem('token');
-                });
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Token seems valid, try to get user info from local storage
+                            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                            if (userInfo.role === 'admin') {
+                                window.location.href = '/admin-dashboard.html';
+                            } else {
+                                window.location.href = '/dashboard.html';
+                            }
+                        } else {
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('userInfo');
+                        }
+                    })
+                    .catch(() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('userInfo');
+                    });
+                }
             }
         });
     </script>
