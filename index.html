@@ -1139,51 +1139,22 @@
 
         // Check if user is already logged in (only if explicitly requested)
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Homepage loaded');
+            console.log('Homepage loaded - APNA Card v2.0');
             
             // Check if there's a hash in the URL and scroll to it
             if (window.location.hash === '#auth') {
                 setTimeout(() => {
                     const authSection = document.querySelector('#auth');
                     if (authSection) {
+                        console.log('Scrolling to auth section');
                         authSection.scrollIntoView({ behavior: 'smooth' });
                     }
                 }, 500);
             }
             
-            // Only check token on page load if redirected from login
-            const urlParams = new URLSearchParams(window.location.search);
-            const checkAuth = urlParams.get('checkAuth');
-            
-            if (checkAuth === 'true') {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    // Verify token is valid
-                    fetch(`${API_BASE}/health`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            // Token seems valid, try to get user info from local storage
-                            const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
-                            if (userInfo.role === 'admin') {
-                                window.location.href = '/admin-dashboard.html';
-                            } else {
-                                window.location.href = '/dashboard.html';
-                            }
-                        } else {
-                            localStorage.removeItem('token');
-                            localStorage.removeItem('user');
-                        }
-                    })
-                    .catch(() => {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                    });
-                }
-            }
+            // DISABLED AUTO-REDIRECT - This was causing issues
+            // Users should manually navigate to dashboard after login
+            console.log('Auto-redirect disabled to prevent redirect loops');
         });
     </script>
 </body>
