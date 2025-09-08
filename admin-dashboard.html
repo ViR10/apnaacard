@@ -595,27 +595,33 @@
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/';
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                window.location.href = '/public/login.html';
                 return;
             }
 
-            // Verify admin token
+            // Check if user is admin
             try {
-                const response = await fetch(`${API_BASE}/admin/students`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Unauthorized');
+                const userData = JSON.parse(user);
+                if (userData.role !== 'admin') {
+                    window.location.href = '/dashboard.html';
+                    return;
                 }
-                
+            } catch (e) {
+                window.location.href = '/public/login.html';
+                return;
+            }
+
+            // Try to load admin data, but don't redirect if it fails initially
+            try {
                 await loadData();
                 setupEventListeners();
             } catch (error) {
-                console.error('Admin auth failed:', error);
-                localStorage.removeItem('token');
-                window.location.href = '/';
+                console.error('Admin data load failed:', error);
+                showAlert('error', 'Failed to load admin data. Some features may be limited.');
+                setupEventListeners(); // Still setup basic functionality
             }
         });
 

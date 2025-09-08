@@ -936,7 +936,7 @@
 
                 if (data.success) {
                     localStorage.setItem('token', data.token);
-                    localStorage.setItem('userInfo', JSON.stringify(data.user));
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     showAlert('success', 'Login successful! Redirecting...');
                     
                     setTimeout(() => {
@@ -1077,7 +1077,7 @@
                     .then(response => {
                         if (response.ok) {
                             // Token seems valid, try to get user info from local storage
-                            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                            const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
                             if (userInfo.role === 'admin') {
                                 window.location.href = '/admin-dashboard.html';
                             } else {
@@ -1085,12 +1085,12 @@
                             }
                         } else {
                             localStorage.removeItem('token');
-                            localStorage.removeItem('userInfo');
+                            localStorage.removeItem('user');
                         }
                     })
                     .catch(() => {
                         localStorage.removeItem('token');
-                        localStorage.removeItem('userInfo');
+                        localStorage.removeItem('user');
                     });
                 }
             }
