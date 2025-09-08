@@ -19,20 +19,16 @@
   bundle = false
   minify = false
 
-# API Routes - Redirect all /api/* requests to serverless functions
+# Direct function access
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  from = "/api/health"
+  to = "/.netlify/functions/health"
   status = 200
-  force = true
-  headers = {X-From = "Netlify"}
 
-# Handle OPTIONS requests for CORS
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  from = "/api/auth/login"
+  to = "/.netlify/functions/login"
   status = 200
-  conditions = {Method = ["OPTIONS"]}
 
 # SPA fallback for client-side routing
 [[redirects]]
