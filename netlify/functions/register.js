@@ -120,25 +120,18 @@ exports.handler = async (event) => {
             };
         }
 
-        // Validation
-        if (!fullName || !department || !studentId || !studentEmail || !personalEmail || !password) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({
-                    success: false,
-                    message: 'All fields are required'
-                })
-            };
-        }
+        // Generate student ID based on email
+        const emailPart = studentEmail.split('@')[0];
+        const generatedStudentId = emailPart.toUpperCase();
 
-        if (password !== confirmPassword) {
+        // Validation
+        if (!fullName || !department || !studentEmail || !personalEmail || !password) {
             return {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({
                     success: false,
-                    message: 'Passwords do not match'
+                    message: 'All fields are required (Full Name, Department, Student Email, Personal Email, Password)'
                 })
             };
         }
@@ -160,7 +153,7 @@ exports.handler = async (event) => {
             $or: [
                 { personalEmail: personalEmail.toLowerCase() },
                 { studentEmail: studentEmail.toLowerCase() },
-                { studentId: studentId.toUpperCase() }
+                { studentId: generatedStudentId }
             ]
         });
 
@@ -179,7 +172,7 @@ exports.handler = async (event) => {
         const newUser = new User({
             fullName,
             department,
-            studentId: studentId.toUpperCase(),
+            studentId: generatedStudentId,
             studentEmail: studentEmail.toLowerCase(),
             personalEmail: personalEmail.toLowerCase(),
             password,

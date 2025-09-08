@@ -7,10 +7,18 @@ async function connectDB() {
     }
     
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
+        const mongoUri = process.env.MONGODB_URI;
+        if (!mongoUri) {
+            console.log('No MongoDB URI configured, running in test mode');
+            return 0; // Return disconnected state for test mode
+        }
+        
+        await mongoose.connect(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000
+            serverSelectionTimeoutMS: 3000,
+            connectTimeoutMS: 5000,
+            maxPoolSize: 5
         });
         return mongoose.connections[0].readyState;
     } catch (error) {
@@ -60,9 +68,10 @@ exports.handler = async (event) => {
         // Service status
         const services = {
             database: {
-                status: dbConnected ? 'healthy' : 'degraded',
+                status: dbConnected ? 'healthy' : (!process.env.MONGODB_URI ? 'test-mode' : 'degraded'),
                 connection: dbStatus,
-                responseTime: responseTime
+                responseTime: responseTime,
+                mode: !process.env.MONGODB_URI ? 'test' : 'production'
             },
             authentication: {
                 status: !!process.env.JWT_SECRET ? 'healthy' : 'degraded',

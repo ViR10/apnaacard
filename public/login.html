@@ -157,7 +157,7 @@
             };
             
             try {
-                const response = await fetch('/api/auth/login', {
+                const response = await fetch('/.netlify/functions/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -169,15 +169,16 @@
                 
                 if (result.success) {
                     // Store token and user info
-                    localStorage.setItem('token', result.data.token);
-                    localStorage.setItem('user', JSON.stringify(result.data.user));
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
                     
                     // Show success message
                     showAlert('Login successful! Redirecting...', 'success');
                     
                     // Redirect based on role
                     setTimeout(() => {
-                        window.location.href = result.data.redirectTo;
+                        const redirectTo = result.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard.html';
+                        window.location.href = redirectTo;
                     }, 1000);
                 } else {
                     showAlert(result.message, 'danger');
