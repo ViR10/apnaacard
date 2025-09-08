@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test - APNA Card</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .test-section h3 { color: #333; margin-top: 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px; font-family: monospace; white-space: pre-wrap; }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>APNA Card Authentication Test</h1>
+        
+        <div class="test-section">
+            <h3>Health Check</h3>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <div id="healthResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Login (Admin)</h3>
+            <input type="email" id="loginEmail" placeholder="Email" value="2024mm@gmail.com">
+            <input type="password" id="loginPassword" placeholder="Password" value="2024mm14@$">
+            <button onclick="testLogin()">Test Login</button>
+            <div id="loginResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Registration</h3>
+            <input type="text" id="regFullName" placeholder="Full Name" value="Test Student">
+            <input type="text" id="regDepartment" placeholder="Department" value="Computer Science">
+            <input type="email" id="regStudentEmail" placeholder="Student Email" value="test@student.uet.edu.pk">
+            <input type="email" id="regPersonalEmail" placeholder="Personal Email" value="test@example.com">
+            <input type="password" id="regPassword" placeholder="Password" value="testpassword123">
+            <button onclick="testRegister()">Test Registration</button>
+            <div id="registerResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Current Status</h3>
+            <p><strong>Token:</strong> <span id="currentToken">Not set</span></p>
+            <p><strong>User:</strong> <span id="currentUser">Not logged in</span></p>
+            <button onclick="clearStorage()">Clear Storage</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/.netlify/functions';
+
+        // Update current status on load
+        updateStatus();
+
+        function updateStatus() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            document.getElementById('currentToken').textContent = token ? token.substr(0, 20) + '...' : 'Not set';
+            document.getElementById('currentUser').textContent = user || 'Not logged in';
+        }
+
+        async function testHealth() {
+            const result = document.getElementById('healthResult');
+            result.className = 'result';
+            result.textContent = 'Testing health endpoint...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                result.className = 'result success';
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('loginResult');
+            result.className = 'result';
+            result.textContent = 'Testing login...';
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    result.className = 'result success';
+                    updateStatus();
+                } else {
+                    result.className = 'result error';
+                }
+                
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function testRegister() {
+            const result = document.getElementById('registerResult');
+            result.className = 'result';
+            result.textContent = 'Testing registration...';
+            
+            const registrationData = {
+                fullName: document.getElementById('regFullName').value,
+                department: document.getElementById('regDepartment').value,
+                studentEmail: document.getElementById('regStudentEmail').value,
+                personalEmail: document.getElementById('regPersonalEmail').value,
+                password: document.getElementById('regPassword').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+                
+                const data = await response.json();
+                
+                result.className = data.success ? 'result success' : 'result error';
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            updateStatus();
+            alert('Local storage cleared');
+        }
+    </script>
+</body>
+</html>
