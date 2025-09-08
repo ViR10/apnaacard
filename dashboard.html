@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APNA Card - Student Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 24px;
+            height: 24px;
+            fill: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d7ff;
+        }
+
+        .id-card-preview {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .id-card-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .id-card-header h4 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .id-card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .id-field {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .id-field-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .id-field-value {
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .id-card-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 5.5V7C15 8.1 14.1 9 13 9S11 8.1 11 7V5.5L5 7V9C5 10.1 5.9 11 7 11V13C7 14.1 7.9 15 9 15H15C16.1 15 17 14.1 17 13V11C18.1 11 19 10.1 19 9ZM7 22V20H17V22H7Z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>APNA Card Dashboard</h1>
+                    <p id="welcomeText">Welcome back!</p>
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <span id="userName">Loading...</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="alerts"></div>
+
+        <div class="dashboard-grid">
+            <!-- Profile Information Card -->
+            <div class="card">
+                <h3>
+                    <svg class="card-icon" viewBox="0 0 24 24">
+                        <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                    </svg>
+                    Profile Information
+                </h3>
+                <div id="profileLoading" class="loading">
+                    <div class="spinner"></div> Loading profile...
+                </div>
+                <div id="profileInfo" class="hidden">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="fullName" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Student Email</label>
+                        <input type="email" id="studentEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" id="department" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <div>
+                            <span id="approvalStatus" class="status-badge">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Profile Card -->
+            <div class="card">
+                <h3>
+                    <svg class="card-icon" viewBox="0 0 24 24">
+                        <path d="M21.7,13.35L20.7,14.35L18.65,12.3L19.65,11.3C19.86,11.08 20.21,11.08 20.42,11.3L21.7,12.58C21.92,12.79 21.92,13.14 21.7,13.35M12,18.94L18.06,12.88L20.11,14.93L14.06,21H12V18.94M12,14C7.58,14 4,15.79 4,18V20H10V18.94L12,16.94V14M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4Z"/>
+                    </svg>
+                    Complete Profile
+                </h3>
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label>CNIC (13 digits)</label>
+                        <input type="text" id="cnic" placeholder="12345-6789012-3" maxlength="15">
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Number</label>
+                        <input type="text" id="registrationNumber" placeholder="2023-CS-123">
+                    </div>
+                    <div class="form-group">
+                        <label>Card Expiry Date</label>
+                        <input type="date" id="expiryDate">
+                    </div>
+                    <button type="submit" class="btn" id="updateBtn">Update Profile</button>
+                </form>
+            </div>
+
+            <!-- Submit for Approval Card -->
+            <div class="card">
+                <h3>
+                    <svg class="card-icon" viewBox="0 0 24 24">
+                        <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                    </svg>
+                    Approval Status
+                </h3>
+                <div id="approvalSection">
+                    <p id="approvalMessage">Complete your profile to submit for approval.</p>
+                    <button class="btn" id="submitApprovalBtn" onclick="submitForApproval()" disabled>
+                        Submit for Approval
+                    </button>
+                </div>
+            </div>
+
+            <!-- ID Card Preview -->
+            <div class="card" id="idCardSection" style="display: none;">
+                <h3>
+                    <svg class="card-icon" viewBox="0 0 24 24">
+                        <path d="M20,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,18H4V6H20V18ZM6,9H18V11H6V9ZM6,12H14V14H6V12Z"/>
+                    </svg>
+                    Your ID Card
+                </h3>
+                <div id="idCardPreview" class="id-card-preview">
+                    <div class="id-card-header">
+                        <h4>University Digital ID Card</h4>
+                        <p>APNA Card System</p>
+                    </div>
+                    <div class="id-card-body">
+                        <div class="id-field">
+                            <div class="id-field-label">Name</div>
+                            <div class="id-field-value" id="cardName">-</div>
+                        </div>
+                        <div class="id-field">
+                            <div class="id-field-label">Student ID</div>
+                            <div class="id-field-value" id="cardStudentId">-</div>
+                        </div>
+                        <div class="id-field">
+                            <div class="id-field-label">Registration</div>
+                            <div class="id-field-value" id="cardRegNumber">-</div>
+                        </div>
+                        <div class="id-field">
+                            <div class="id-field-label">Department</div>
+                            <div class="id-field-value" id="cardDepartment">-</div>
+                        </div>
+                        <div class="id-field">
+                            <div class="id-field-label">CNIC</div>
+                            <div class="id-field-value" id="cardCnic">-</div>
+                        </div>
+                        <div class="id-field">
+                            <div class="id-field-label">Valid Until</div>
+                            <div class="id-field-value" id="cardExpiry">-</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="downloadIdCard()" style="margin-top: 20px;">
+                    Download ID Card
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/.netlify/functions';
+        let currentUser = null;
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            await loadProfile();
+        });
+
+        // Load user profile
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/student/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUser = data.data;
+                    displayProfile();
+                    updateApprovalSection();
+                    if (currentUser.approvalStatus === 'approved') {
+                        await loadIdCard();
+                    }
+                } else {
+                    showAlert('error', 'Failed to load profile: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Load profile error:', error);
+                showAlert('error', 'Error loading profile');
+            } finally {
+                document.getElementById('profileLoading').classList.add('hidden');
+                document.getElementById('profileInfo').classList.remove('hidden');
+            }
+        }
+
+        // Display profile information
+        function displayProfile() {
+            document.getElementById('userName').textContent = currentUser.fullName;
+            document.getElementById('userAvatar').textContent = currentUser.fullName.charAt(0).toUpperCase();
+            document.getElementById('welcomeText').textContent = `Welcome, ${currentUser.fullName.split(' ')[0]}!`;
+
+            // Fill profile form
+            document.getElementById('fullName').value = currentUser.fullName || '';
+            document.getElementById('studentEmail').value = currentUser.studentEmail || '';
+            document.getElementById('department').value = currentUser.department || '';
+
+            // Update editable fields
+            document.getElementById('cnic').value = currentUser.cnic || '';
+            document.getElementById('registrationNumber').value = currentUser.registrationNumber || '';
+            
+            if (currentUser.expiryDate) {
+                document.getElementById('expiryDate').value = new Date(currentUser.expiryDate).toISOString().split('T')[0];
+            }
+
+            // Update approval status
+            const statusElement = document.getElementById('approvalStatus');
+            statusElement.textContent = currentUser.approvalStatus;
+            statusElement.className = `status-badge status-${currentUser.approvalStatus}`;
+        }
+
+        // Update profile form handler
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const updateBtn = document.getElementById('updateBtn');
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+
+            try {
+                const formData = {
+                    cnic: document.getElementById('cnic').value.replace(/\D/g, ''),
+                    registrationNumber: document.getElementById('registrationNumber').value,
+                    expiryDate: document.getElementById('expiryDate').value
+                };
+
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/student/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUser = data.data;
+                    showAlert('success', 'Profile updated successfully!');
+                    updateApprovalSection();
+                } else {
+                    showAlert('error', 'Update failed: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('error', 'Error updating profile');
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Profile';
+            }
+        });
+
+        // Update approval section based on profile completeness
+        function updateApprovalSection() {
+            const submitBtn = document.getElementById('submitApprovalBtn');
+            const messageEl = document.getElementById('approvalMessage');
+
+            if (currentUser.approvalStatus === 'approved') {
+                messageEl.textContent = 'Your profile has been approved! You can now access your digital ID card.';
+                submitBtn.style.display = 'none';
+            } else if (currentUser.approvalStatus === 'pending') {
+                messageEl.textContent = 'Your profile is under review. Please wait for admin approval.';
+                submitBtn.style.display = 'none';
+            } else if (currentUser.approvalStatus === 'rejected') {
+                messageEl.textContent = 'Your profile was rejected. Please update your information and resubmit.';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Resubmit for Approval';
+            } else {
+                // Check if profile is complete
+                const isComplete = currentUser.cnic && currentUser.registrationNumber && currentUser.expiryDate;
+                
+                if (isComplete) {
+                    messageEl.textContent = 'Your profile is complete. Submit for admin approval to get your digital ID card.';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit for Approval';
+                } else {
+                    messageEl.textContent = 'Complete your profile information to submit for approval.';
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Complete Profile First';
+                }
+            }
+        }
+
+        // Submit for approval
+        async function submitForApproval() {
+            const submitBtn = document.getElementById('submitApprovalBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/student/submit-approval`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', 'Profile submitted for approval successfully!');
+                    currentUser.approvalStatus = 'pending';
+                    updateApprovalSection();
+                    
+                    // Update status badge
+                    const statusElement = document.getElementById('approvalStatus');
+                    statusElement.textContent = 'pending';
+                    statusElement.className = 'status-badge status-pending';
+                } else {
+                    showAlert('error', 'Submission failed: ' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit for Approval';
+                }
+            } catch (error) {
+                console.error('Submit error:', error);
+                showAlert('error', 'Error submitting for approval');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit for Approval';
+            }
+        }
+
+        // Load ID card data for approved users
+        async function loadIdCard() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/student/id-card`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayIdCard(data.data);
+                    document.getElementById('idCardSection').style.display = 'block';
+                } else {
+                    console.log('ID card not available:', data.message);
+                }
+            } catch (error) {
+                console.error('Load ID card error:', error);
+            }
+        }
+
+        // Display ID card preview
+        function displayIdCard(cardData) {
+            document.getElementById('cardName').textContent = cardData.fullName;
+            document.getElementById('cardStudentId').textContent = cardData.studentId || 'N/A';
+            document.getElementById('cardRegNumber').textContent = cardData.registrationNumber;
+            document.getElementById('cardDepartment').textContent = cardData.department || 'N/A';
+            document.getElementById('cardCnic').textContent = formatCnic(cardData.cnic);
+            document.getElementById('cardExpiry').textContent = new Date(cardData.expiryDate).toLocaleDateString();
+        }
+
+        // Format CNIC for display
+        function formatCnic(cnic) {
+            if (!cnic) return 'N/A';
+            const cleaned = cnic.replace(/\D/g, '');
+            if (cleaned.length === 13) {
+                return `${cleaned.substr(0,5)}-${cleaned.substr(5,7)}-${cleaned.substr(12,1)}`;
+            }
+            return cnic;
+        }
+
+        // Format CNIC input
+        document.getElementById('cnic').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 13) {
+                if (value.length > 5 && value.length <= 12) {
+                    value = value.substr(0,5) + '-' + value.substr(5);
+                }
+                if (value.length > 13) {
+                    value = value.substr(0,5) + '-' + value.substr(5,7) + '-' + value.substr(12);
+                }
+                e.target.value = value;
+            }
+        });
+
+        // Download ID card
+        async function downloadIdCard() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/id-card-generator`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `uet-id-card-${currentUser.registrationNumber || 'student'}.html`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showAlert('success', 'ID card downloaded successfully!');
+                } else {
+                    const errorData = await response.json();
+                    showAlert('error', errorData.message || 'Download failed');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                showAlert('error', 'Error downloading ID card');
+            }
+        }
+
+        // Show alert messages
+        function showAlert(type, message) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

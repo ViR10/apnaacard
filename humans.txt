@@ -1,0 +1,43 @@
+/* TEAM */
+Developer: APNA Card Development Team
+Contact: contact@apnacard.netlify.app
+From: Lahore, Pakistan
+
+/* THANKS */
+University of Engineering and Technology, Lahore
+Students and Faculty for feedback and testing
+
+/* SITE */
+Last update: 2025/01/08
+Language: English
+Doctype: HTML5
+IDE: Visual Studio Code
+Technologies: HTML5, CSS3, JavaScript, Node.js, MongoDB, Netlify Functions
+Standards: W3C, WCAG 2.1
+
+/* COMPONENTS */
+Frontend: Vanilla JavaScript, CSS3 Grid/Flexbox
+Backend: Node.js, Express.js equivalent (Netlify Functions)
+Database: MongoDB with Mongoose ODM
+Authentication: JWT (JSON Web Tokens)
+Security: bcrypt password hashing
+Hosting: Netlify
+CDN: Netlify Edge Network
+
+/* FEATURES */
+- Student ID card management
+- Admin approval system
+- Secure authentication
+- Mobile-responsive design
+- Progressive Web App features
+- SEO optimized
+- Accessibility compliant (WCAG 2.1)
+
+                              .-"-.
+                             /|6 6|\
+                            {/(_0_)\}
+                             _/ ^ \_
+                            (/ /^\ \)-'
+                             ""   ""
+
+   We ♥ UET Lahore Students!

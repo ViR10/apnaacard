@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://apnacard.netlify.app/sitemap.xml
+
+# Disallow specific paths
+Disallow: /netlify/
+Disallow: /.netlify/
+Disallow: /admin-dashboard.html
+Disallow: /dashboard.html
+
+# Allow important pages
+Allow: /
+Allow: /index.html
+
+# Crawl delay
+Crawl-delay: 1

@@ -1,0 +1,76 @@
+{
+  "name": "APNA Card - Digital Student ID Management System",
+  "short_name": "APNA Card",
+  "description": "Official digital student identity card management system for UET Lahore. Create, manage, and download your university ID card online at apnacard.netlify.app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en-PK",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cpath fill='%23667eea' d='M96 16c8.8 0 16 7.2 16 16s-7.2 16-16 16-16-7.2-16-16 7.2-16 16-16zm72 56v-16l-48-12v16c0 8.8-7.2 16-16 16s-16-7.2-16-16V60l-48 16v16c0 8.8 7.2 16 16 16v16c0 8.8 7.2 16 16 16h64c8.8 0 16-7.2 16-16v-16c8.8 0 16-7.2 16-16zM56 176v-16h80v16H56z'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%23667eea' d='M256 42.67c23.47 0 42.67 19.2 42.67 42.66s-19.2 42.67-42.67 42.67-42.67-19.21-42.67-42.67S232.53 42.67 256 42.67zM448 192v-42.67L320 128v42.67c0 23.46-19.2 42.66-42.67 42.66s-42.66-19.2-42.66-42.66V128l-128 21.33V192c0 23.47 19.2 42.67 42.67 42.67v42.66c0 23.47 19.2 42.67 42.66 42.67h170.67c23.46 0 42.66-19.2 42.66-42.67v-42.66c23.47 0 42.67-19.2 42.67-42.67zM149.33 469.33V426.67h213.34v42.66H149.33z'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/assets/screenshot-mobile.png", 
+      "sizes": "360x640",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Student Login",
+      "short_name": "Login",
+      "description": "Quick access to student dashboard",
+      "url": "/?login=student",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23667eea' d='M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z'/%3E%3C/svg%3E",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Admin Portal",
+      "short_name": "Admin",
+      "description": "Administrative dashboard access",
+      "url": "/admin-dashboard.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23667eea' d='M12,15C12.81,15 13.5,14.7 14.11,14.11C14.7,13.5 15,12.81 15,12C15,11.19 14.7,10.5 14.11,9.89C13.5,9.3 12.81,9 12,9C11.19,9 10.5,9.3 9.89,9.89C9.3,10.5 9,11.19 9,12C9,12.81 9.3,13.5 9.89,14.11C10.5,14.7 11.19,15 12,15Z'/%3E%3C/svg%3E",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "protocol_handlers": [
+    {
+      "protocol": "web+apnacard",
+      "url": "/?action=%s"
+    }
+  ]
+}
