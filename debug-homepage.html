@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage Debug - APNA Card</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+        }
+        button, .btn { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            margin: 5px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-block; 
+        }
+        button:hover, .btn:hover { 
+            background: #0056b3; 
+        }
+        .result { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin-top: 10px; 
+            font-family: monospace; 
+            white-space: pre-wrap; 
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .info { border-left: 4px solid #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>APNA Card - Homepage Navigation Debug</h1>
+        
+        <div class="section">
+            <h3>Current Page Information</h3>
+            <div id="pageInfo" class="result info"></div>
+        </div>
+
+        <div class="section">
+            <h3>Test Homepage Navigation</h3>
+            <p>These should scroll to the auth section on the homepage:</p>
+            <a href="/#auth" class="btn">Get Started (/#auth)</a>
+            <a href="#auth" class="btn">Local Auth Anchor</a>
+            <button onclick="scrollToAuth()">Scroll to Auth (JS)</button>
+            <div id="scrollResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>Test Different Login Paths</h3>
+            <a href="/public/login.html" class="btn" target="_blank">Separate Login Page</a>
+            <a href="/login" class="btn" target="_blank">Login Redirect</a>
+            <a href="/auth" class="btn" target="_blank">Auth Redirect</a>
+            <div id="pathResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>Test Authentication State</h3>
+            <button onclick="checkAuth()">Check Current Auth</button>
+            <button onclick="clearAuth()">Clear Auth Data</button>
+            <button onclick="testLogin()">Test Quick Login</button>
+            <div id="authResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>Test Homepage Directly</h3>
+            <a href="/" class="btn">Go to Homepage</a>
+            <a href="/?debug=true" class="btn">Homepage with Debug</a>
+            <div id="homepageResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Display current page info
+        document.getElementById('pageInfo').textContent = `
+Current URL: ${window.location.href}
+Current Hash: ${window.location.hash}
+User Agent: ${navigator.userAgent}
+Referrer: ${document.referrer}
+
+Local Storage:
+Token: ${localStorage.getItem('token') ? 'Present' : 'None'}
+User: ${localStorage.getItem('user') ? 'Present' : 'None'}
+        `;
+
+        function scrollToAuth() {
+            const result = document.getElementById('scrollResult');
+            result.className = 'result info';
+            
+            // Check if we're on the homepage
+            if (window.location.pathname === '/debug-homepage.html') {
+                result.textContent = 'Cannot scroll to #auth from debug page. This would work on the homepage.';
+                return;
+            }
+            
+            const authSection = document.querySelector('#auth');
+            if (authSection) {
+                authSection.scrollIntoView({ behavior: 'smooth' });
+                result.textContent = 'Scrolled to auth section successfully!';
+                result.className = 'result success';
+            } else {
+                result.textContent = 'Auth section not found on this page!';
+                result.className = 'result error';
+            }
+        }
+
+        function checkAuth() {
+            const result = document.getElementById('authResult');
+            result.className = 'result info';
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            result.textContent = `
+Token: ${token ? token.substr(0, 20) + '...' : 'None'}
+User: ${user || 'None'}
+
+Storage Keys: ${Object.keys(localStorage).join(', ')}
+            `;
+        }
+
+        function clearAuth() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userInfo'); // in case of old key
+            
+            const result = document.getElementById('authResult');
+            result.className = 'result success';
+            result.textContent = 'Authentication data cleared!';
+            
+            setTimeout(() => checkAuth(), 500);
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('authResult');
+            result.className = 'result info';
+            result.textContent = 'Testing login...';
+            
+            try {
+                const response = await fetch('/.netlify/functions/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: '2024mm@gmail.com',
+                        password: '2024mm14@$'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    result.className = 'result success';
+                    result.textContent = 'Test login successful!\n' + JSON.stringify(data, null, 2);
+                } else {
+                    result.className = 'result error';
+                    result.textContent = 'Test login failed:\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = 'Login error: ' + error.message;
+            }
+        }
+
+        // Monitor hash changes
+        window.addEventListener('hashchange', () => {
+            console.log('Hash changed to:', window.location.hash);
+        });
+    </script>
+</body>
+</html>

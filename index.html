@@ -732,6 +732,12 @@
                     <button class="auth-tab active" data-tab="login">Login</button>
                     <button class="auth-tab" data-tab="register">Register</button>
                 </div>
+                
+                <div class="auth-info" style="text-align: center; padding: 10px; margin-bottom: 20px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.2);">
+                    <p style="margin: 0; font-size: 14px; color: #333;">
+                        <strong>New to APNA Card?</strong> Click "Register" to create your account and get your digital student ID card.
+                    </p>
+                </div>
 
                 <div id="alerts"></div>
 
@@ -1045,8 +1051,33 @@
             }
         }
 
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        // Smooth scrolling for anchor links - specifically handle auth links
+        document.querySelectorAll('a[href="#auth"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                console.log('Auth link clicked, scrolling to auth section');
+                
+                const authSection = document.querySelector('#auth');
+                if (authSection) {
+                    authSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Ensure register tab is active for "Get Started" button
+                    if (this.textContent.includes('Get Started') || this.textContent.includes('Create Account')) {
+                        setTimeout(() => {
+                            document.querySelector('[data-tab="register"]').click();
+                        }, 500);
+                    }
+                } else {
+                    console.error('Auth section not found!');
+                }
+            });
+        });
+        
+        // Handle other anchor links
+        document.querySelectorAll('a[href^="#"]:not([href="#auth"])').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
@@ -1061,6 +1092,18 @@
 
         // Check if user is already logged in (only if explicitly requested)
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('Homepage loaded');
+            
+            // Check if there's a hash in the URL and scroll to it
+            if (window.location.hash === '#auth') {
+                setTimeout(() => {
+                    const authSection = document.querySelector('#auth');
+                    if (authSection) {
+                        authSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 500);
+            }
+            
             // Only check token on page load if redirected from login
             const urlParams = new URLSearchParams(window.location.search);
             const checkAuth = urlParams.get('checkAuth');
